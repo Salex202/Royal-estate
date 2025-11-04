@@ -2572,4 +2572,4 @@ def api_property_details(property_id):
         return jsonify({'error': 'Property not found'}), 404
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()

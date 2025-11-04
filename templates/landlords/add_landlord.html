@@ -1,0 +1,115 @@
+{% include 'partials/header.html' %}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Add New Landlord</h1>
+        <a href="{{ url_for('landlords_list') }}" class="btn btn-primary">
+            <i class="fas fa-list"></i> View All Landlords
+        </a>
+    </div>
+    
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Landlord Details</h6>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{{ url_for('add_landlord') }}" id="landlordForm">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="full_name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="full_name" name="full_name" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" id="phone" name="phone" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_number" class="form-label">ID Number</label>
+                            <input type="text" class="form-control" id="id_number" name="id_number">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="address" class="form-label">Address</label>
+                    <textarea class="form-control" id="address" name="address" rows="2"></textarea>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="bank_name" class="form-label">Bank Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="bank_name" name="bank_name" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="account_number" class="form-label">Account Number <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="account_number" name="account_number" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Save Landlord
+                    </button>
+                    <button type="reset" class="btn btn-secondary">
+                        <i class="fas fa-undo"></i> Reset Form
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</div> <!-- end of main-content div -->
+</div> <!-- end of content div -->
+</div> <!-- end of wrapper div -->
+
+{% include 'partials/modals.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form validation
+        const landlordForm = document.getElementById('landlordForm');
+        landlordForm.addEventListener('submit', function(event) {
+            // Could add additional validation here if needed
+        });
+        
+        // Flash messages
+        const flashMessages = document.getElementById('flash-messages');
+        if (flashMessages) {
+            const messages = flashMessages.getElementsByClassName('message');
+            if (messages.length > 0) {
+                Swal.fire({
+                    title: 'Notification',
+                    text: messages[0].textContent,
+                    icon: 'info',
+                    confirmButtonText: 'OK'
+                });
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

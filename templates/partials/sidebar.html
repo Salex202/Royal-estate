@@ -1,0 +1,102 @@
+<div class="sidebar">
+    <ul class="menu">
+        <li class="{% if request.path == url_for('dashboard') %}active{% endif %}">
+            <a href="{{ url_for('dashboard') }}">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+        
+        <li class="menu-header">Properties</li>
+        <li class="{% if '/properties/' in request.path %}active{% endif %}">
+            <a href="#" class="submenu-toggle">
+                <i class="fas fa-building"></i>
+                <span>Properties</span>
+                <i class="fas fa-chevron-right submenu-icon"></i>
+            </a>
+            <ul class="submenu">
+                <li><a href="{{ url_for('add_property') }}">Add Property</a></li>
+                <li><a href="{{ url_for('properties_list') }}">All Properties</a></li>
+                <li><a href="{{ url_for('vacant_properties') }}">Vacant Properties</a></li>
+                <li><a href="{{ url_for('occupied_properties') }}">Occupied Properties</a></li>
+                <li><a href="{{ url_for('renew_rent') }}">Renew Rent</a></li>
+            </ul>
+        </li>
+        
+        <li class="menu-header">Tenants</li>
+        <li class="{% if '/tenants/' in request.path %}active{% endif %}">
+            <a href="#" class="submenu-toggle">
+                <i class="fas fa-users"></i>
+                <span>Tenants</span>
+                <i class="fas fa-chevron-right submenu-icon"></i>
+            </a>
+            <ul class="submenu">
+                <li><a href="{{ url_for('add_tenant') }}">Add Tenant</a></li>
+                <li><a href="{{ url_for('tenants_list') }}">All Tenants</a></li>
+            </ul>
+        </li>
+        
+        <li class="menu-header">Landlords</li>
+        <li class="{% if '/landlords/' in request.path %}active{% endif %}">
+            <a href="#" class="submenu-toggle">
+                <i class="fas fa-user-tie"></i>
+                <span>Landlords</span>
+                <i class="fas fa-chevron-right submenu-icon"></i>
+            </a>
+            <ul class="submenu">
+                <li><a href="{{ url_for('add_landlord') }}">Add Landlord</a></li>
+                <li><a href="{{ url_for('landlords_list') }}">All Landlords</a></li>
+                <li><a href="{{ url_for('landlord_account_statement') }}">Account Statements</a></li>
+                <li><a href="{{ url_for('landlord_account_statement') }}"></a></li>
+            </ul>
+        </li>
+        
+        <li class="menu-header">Finances</li>
+        <li class="{% if '/payments/' in request.path %}active{% endif %}">
+            <a href="#" class="submenu-toggle">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>Payments</span>
+                <i class="fas fa-chevron-right submenu-icon"></i>
+            </a>
+            <ul class="submenu">
+                <li><a href="{{ url_for('add_payment') }}">Add Payment</a></li>
+                <li><a href="{{ url_for('payments_list') }}">All Payments</a></li>
+            </ul>
+        </li>
+        
+        <li class="menu-header">Documents</li>
+        <li class="{% if '/documents/' in request.path %}active{% endif %}">
+            <a href="#" class="submenu-toggle">
+                <i class="fas fa-file-alt"></i>
+                <span>Documents</span>
+                <i class="fas fa-chevron-right submenu-icon"></i>
+            </a>
+            <ul class="submenu">
+                <li><a href="{{ url_for('add_document') }}">Add Document</a></li>
+                <li><a href="{{ url_for('documents_list') }}">All Documents</a></li>
+            </ul>
+        </li>
+        
+        <li class="menu-header">Reports</li>
+        <li class="{% if '/reports/' in request.path %}active{% endif %}">
+            <a href="#" class="submenu-toggle">
+                <i class="fas fa-chart-bar"></i>
+                <span>Reports</span>
+                <i class="fas fa-chevron-right submenu-icon"></i>
+            </a>
+            <ul class="submenu">
+                <li><a href="{{ url_for('occupancy_report') }}">Occupancy Report</a></li>
+                <li><a href="{{ url_for('revenue_report') }}">Revenue Report</a></li>
+                <li><a href="{{ url_for('tenants_report') }}">Tenants Report</a></li>
+            </ul>
+        </li>
+        
+        <li class="menu-header">System</li>
+        <li class="{% if request.path == url_for('settings') %}active{% endif %}">
+            <a href="{{ url_for('settings') }}">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+        </li>
+    </ul>
+</div>

@@ -1,0 +1,256 @@
+{% include 'partials/header.html' %}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Properties List</h1>
+        <a href="{{ url_for('add_property') }}" class="btn btn-success">
+            <i class="fas fa-plus"></i> Add New Property
+        </a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">All Properties</h6>
+            <div>
+                <input type="text" id="propertySearch" class="form-control form-control-sm" placeholder="Search properties..." style="min-width: 200px;">
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="propertiesTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Type</th>
+                            <th>Location</th>
+                            <th>Landlord</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for property in properties %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('property_detail', property_id=property.id) }}">
+                                    {{ property.title }}
+                                </a>
+                            </td>
+                            <td>{{ property.type }}</td>
+                            <td>{{ property.location }}</td>
+                            <td>{{ property.landlord_name }}</td>
+                            <td>
+                                {% if property.type in ['Tenement', 'Shop'] %}
+                                    {% if property.total_units == property.occupied_units %}
+                                        <span class="badge bg-danger">Fully Occupied</span>
+                                    {% elif property.occupied_units > 0 %}
+                                        <span class="badge bg-warning">{{ property.occupied_units }}/{{ property.total_units }} Occupied</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Vacant</span>
+                                    {% endif %}
+                                {% else %}
+                                    {% if property.status == 'Occupied' %}
+                                        <span class="badge bg-danger">Occupied</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Vacant</span>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                            <td>
+                                <!-- View Button -->
+                                <a href="{{ url_for('property_detail', property_id=property.id) }}" class="btn btn-info btn-sm" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+
+                                <!-- Link Tenant Button -->
+                                {% if property.type in ['Tenement', 'Shop'] %}
+                                    {% if property.total_units > property.occupied_units %}
+                                        <button class="btn btn-success btn-sm link-btn"
+                                                data-property-id="{{ property.id }}"
+                                                data-property-type="{{ property.type }}"
+                                                title="Link Tenant">
+                                            <i class="fas fa-link"></i>
+                                        </button>
+                                    {% else %}
+                                        <button class="btn btn-secondary btn-sm" disabled title="No vacant units">
+                                            <i class="fas fa-link"></i>
+                                        </button>
+                                    {% endif %}
+                                {% else %}
+                                    {% if property.status == 'Vacant' %}
+                                        <button class="btn btn-success btn-sm link-btn"
+                                                data-property-id="{{ property.id }}"
+                                                data-property-type="{{ property.type }}"
+                                                title="Link Tenant">
+                                            <i class="fas fa-link"></i>
+                                        </button>
+                                    {% else %}
+                                        <button class="btn btn-secondary btn-sm" disabled title="Property occupied">
+                                            <i class="fas fa-link"></i>
+                                        </button>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Link Tenant Modal -->
+<div class="modal fade" id="linkTenantModal" tabindex="-1" aria-labelledby="linkTenantModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('link_tenant_to_property') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="linkTenantModalLabel">Link Tenant to Property</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="property_id" id="link_property_id">
+                    
+                    <div class="mb-3">
+                        <label for="tenant_id" class="form-label">Select Tenant <span class="text-danger">*</span></label>
+                        <select class="form-select" id="tenant_id" name="tenant_id" required>
+                            <option value="">-- Choose Tenant --</option>
+                            {% for tenant in unlinked_tenants %}
+                                <option value="{{ tenant.id }}">{{ tenant.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3" id="unit-container" style="display:none;">
+                        <label for="unit_id" class="form-label">Select Unit <span class="text-danger">*</span></label>
+                        <select class="form-select" id="unit_id" name="unit_id">
+                            <option value="">-- Choose Unit --</option>
+                        </select>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="lease_start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="lease_start_date" name="lease_start_date" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="lease_end_date" class="form-label">End Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="lease_end_date" name="lease_end_date" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-link"></i> Link Tenant
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% include 'partials/modals.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Search Filter
+    const searchInput = document.getElementById('propertySearch');
+    const table = document.getElementById('propertiesTable');
+    const rows = table.querySelectorAll('tbody tr');
+
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const term = searchInput.value.toLowerCase();
+            rows.forEach(row => {
+                const cells = Array.from(row.getElementsByTagName('td'));
+                const match = cells.some(td => td.textContent.toLowerCase().includes(term));
+                row.style.display = match ? '' : 'none';
+            });
+        });
+    }
+
+    // Link Tenant Modal Handler
+    document.querySelectorAll('.link-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const propertyId = this.getAttribute('data-property-id');
+            const propertyType = this.getAttribute('data-property-type');
+            document.getElementById('link_property_id').value = propertyId;
+
+            const unitContainer = document.getElementById('unit-container');
+            const unitSelect = document.getElementById('unit_id');
+
+            if (propertyType === 'Tenement' || propertyType === 'Shop') {
+                // Fetch available units for tenement/shop
+                fetch(`/properties/available-units/${propertyId}`)
+                    .then(res => {
+                        if (!res.ok) throw new Error('Failed to fetch units');
+                        return res.json();
+                    })
+                    .then(units => {
+                        unitSelect.innerHTML = '<option value="">-- Choose Unit --</option>';
+                        if (units.length === 0) {
+                            unitSelect.innerHTML += '<option value="" disabled>No vacant units available</option>';
+                        } else {
+                            units.forEach(u => {
+                                const opt = document.createElement('option');
+                                opt.value = u.id;
+                                opt.textContent = `${u.unit_name} (₦${parseFloat(u.price).toLocaleString()})`;
+                                unitSelect.appendChild(opt);
+                            });
+                        }
+                        unitContainer.style.display = 'block';
+                        unitSelect.required = true;
+                    })
+                    .catch(err => {
+                        console.error('Error loading units:', err);
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Failed to load available units. Please try again.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    });
+            } else {
+                // For standalone properties, hide unit selection
+                unitContainer.style.display = 'none';
+                unitSelect.required = false;
+                unitSelect.value = '';
+            }
+
+            // Show the modal
+            const linkModal = new bootstrap.Modal(document.getElementById('linkTenantModal'));
+            linkModal.show();
+        });
+    });
+
+    // Flash messages
+    const flashMessages = document.getElementById('flash-messages');
+    if (flashMessages) {
+        const messages = flashMessages.getElementsByClassName('message');
+        if (messages.length > 0) {
+            Swal.fire({
+                title: 'Notification',
+                text: messages[0].textContent,
+                icon: 'info',
+                confirmButtonText: 'OK'
+            });
+        }
+    }
+});
+</script>
+
+</body>
+</html>

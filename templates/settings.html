@@ -1,0 +1,120 @@
+{% include 'partials/header.html' %}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Settings</h1>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Reminder Settings</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('settings') }}">
+                        <input type="hidden" name="action" value="update_reminders">
+                        
+                        <div class="mb-3">
+                            <label for="rent_reminder_days" class="form-label">Rent Due Reminder (Days Before)</label>
+                            <input type="number" class="form-control" id="rent_reminder_days" name="rent_reminder_days" 
+                                value="{{ reminder_settings.get('rent_reminder_days', 7) }}" min="1" max="30" required>
+                            <div class="form-text">Number of days before rent due date to send reminders.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="partial_payment_reminder_days" class="form-label">Partial Payment Follow-up (Days After)</label>
+                            <input type="number" class="form-control" id="partial_payment_reminder_days" name="partial_payment_reminder_days" 
+                                value="{{ reminder_settings.get('partial_payment_reminder_days', 3) }}" min="1" max="30" required>
+                            <div class="form-text">Number of days after partial payment to follow up for balance.</div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Save Reminder Settings</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Change Password</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{{ url_for('settings') }}">
+                        <input type="hidden" name="action" value="change_password">
+                        
+                        <div class="mb-3">
+                            <label for="current_password" class="form-label">Current Password</label>
+                            <input type="password" class="form-control" id="current_password" name="current_password" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="new_password" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password" 
+                                minlength="6" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
+                                minlength="6" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Change Password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div> <!-- end of main-content div -->
+</div> <!-- end of content div -->
+</div> <!-- end of wrapper div -->
+
+{% include 'partials/modals.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Password confirmation validation
+        const form = document.querySelector('form[action*="change_password"]');
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                const newPassword = document.getElementById('new_password').value;
+                const confirmPassword = document.getElementById('confirm_password').value;
+                
+                if (newPassword !== confirmPassword) {
+                    event.preventDefault();
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'New passwords do not match',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            });
+        }
+        
+        // Flash messages
+        const flashMessages = document.getElementById('flash-messages');
+        if (flashMessages) {
+            const messages = flashMessages.getElementsByClassName('message');
+            if (messages.length > 0) {
+                Swal.fire({
+                    title: 'Notification',
+                    text: messages[0].textContent,
+                    icon: 'info',
+                    confirmButtonText: 'OK'
+                });
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

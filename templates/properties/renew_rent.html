@@ -1,0 +1,361 @@
+{% include 'partials/header.html' %}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Renew Rent / Manage Leases</h1>
+        <a href="{{ url_for('properties_list') }}" class="btn btn-primary">
+            <i class="fas fa-list"></i> Back to Properties
+        </a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">All Tenants</h6>
+            <input type="text" id="tenantSearch" class="form-control form-control-sm" style="max-width: 300px;" placeholder="Search tenants...">
+        </div>
+        <div class="card-body">
+            {% if tenants %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="tenantsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tenant</th>
+                            <th>Property</th>
+                            <th>Landlord</th>
+                            <th>Lease Start</th>
+                            <th>Lease End</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tenant in tenants %}
+                        <tr>
+                            <td><strong>{{ tenant.full_name }}</strong></td>
+                            <td>
+                                {{ tenant.property_title }}
+                                {% if tenant.unit_name %}
+                                <br><small class="text-muted">Unit: {{ tenant.unit_name }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ tenant.landlord_name }}</td>
+                            <td>{{ tenant.lease_start_date or 'N/A' }}</td>
+                            <td>{{ tenant.lease_end_date or 'N/A' }}</td>
+                            <td>
+                                {% if tenant.lease_status == 'Expired' %}
+                                    <span class="badge bg-danger">Expired</span>
+                                {% elif tenant.lease_status == 'Expiring Soon' %}
+                                    <span class="badge bg-warning text-dark">Expiring Soon</span>
+                                {% else %}
+                                    <span class="badge bg-success">Active</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-success btn-sm renew-btn"
+                                        data-tenant-id="{{ tenant.tenant_id }}"
+                                        data-tenant-name="{{ tenant.full_name }}"
+                                        data-property-id="{{ tenant.property_id }}"
+                                        data-property-title="{{ tenant.property_title }}"
+                                        data-unit-id="{{ tenant.unit_id or '' }}"
+                                        data-rent-amount="{{ tenant.rent_amount or 0 }}"
+                                        data-lease-start="{{ tenant.lease_start_date or '' }}"
+                                        data-lease-end="{{ tenant.lease_end_date or '' }}">
+                                    <i class="fas fa-sync"></i> Renew Rent
+                                </button>
+                                <button class="btn btn-danger btn-sm end-lease-btn"
+                                        data-tenant-id="{{ tenant.tenant_id }}"
+                                        data-tenant-name="{{ tenant.full_name }}">
+                                    <i class="fas fa-ban"></i> End Lease
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> No tenants found.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Renew Rent Modal -->
+<div class="modal fade" id="renewModal" tabindex="-1" aria-labelledby="renewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('renew_rent') }}" id="renewForm">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="renewModalLabel">
+                        <i class="fas fa-sync"></i> Renew Rent for <span id="modal-tenant-name"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Hidden fields -->
+                    <input type="hidden" name="tenant_id" id="tenant_id">
+                    <input type="hidden" name="property_id" id="property_id">
+                    <input type="hidden" name="unit_id" id="unit_id">
+
+                    <div class="alert alert-info">
+                        <strong><i class="fas fa-info-circle"></i> Property:</strong> <span id="property_title_display"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">New Lease Start Date <span class="text-danger">*</span></label>
+                            <input type="date" name="new_start_date" id="new_start_date" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">New Lease End Date <span class="text-danger">*</span></label>
+                            <input type="date" name="new_end_date" id="new_end_date" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Payment Amount <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" step="0.01" min="0" name="amount" id="amount" class="form-control" required>
+                            </div>
+                            <small class="form-text text-muted">Current rent: <strong id="current_rent_display"></strong></small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Payment Type <span class="text-danger">*</span></label>
+                            <select name="payment_type" id="payment_type" class="form-select" required>
+                                <option value="Full">Full Payment</option>
+                                <option value="Partial">Partial Payment</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Payment Method <span class="text-danger">*</span></label>
+                            <select name="payment_method" id="payment_method" class="form-select" required>
+                                <option value="Cash">Cash</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="POS">POS</option>
+                                <option value="Mobile Money">Mobile Money</option>
+                                <option value="Check">Check</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Payment Date <span class="text-danger">*</span></label>
+                            <input type="date" name="payment_date" id="payment_date" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description (optional)</label>
+                        <textarea name="description" id="description" class="form-control" rows="2" placeholder="e.g. Renewal for 12 months"></textarea>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <strong><i class="fas fa-exclamation-triangle"></i> Note:</strong> 
+                        A 10% management fee will be deducted automatically if this tenant has completed at least one previous payment cycle.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check"></i> Process Renewal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</div> <!-- end of main-content div -->
+</div> <!-- end of content div -->
+</div> <!-- end of wrapper div -->
+
+{% include 'partials/modals.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page loaded - initializing scripts');
+    
+    // 🔍 Search Filter
+    const searchInput = document.getElementById('tenantSearch');
+    const tableRows = document.querySelectorAll('#tenantsTable tbody tr');
+    
+    if (searchInput && tableRows.length > 0) {
+        searchInput.addEventListener('keyup', function() {
+            const searchTerm = this.value.toLowerCase();
+            tableRows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+    }
+
+    // 🟢 Open Renew Modal
+    const renewButtons = document.querySelectorAll('.renew-btn');
+    const renewModal = new bootstrap.Modal(document.getElementById('renewModal'));
+    
+    console.log(`Found ${renewButtons.length} renew buttons`);
+    
+    renewButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Renew button clicked');
+            
+            // Get data attributes
+            const tenantId = this.getAttribute('data-tenant-id');
+            const tenantName = this.getAttribute('data-tenant-name');
+            const propertyId = this.getAttribute('data-property-id');
+            const propertyTitle = this.getAttribute('data-property-title');
+            const unitId = this.getAttribute('data-unit-id');
+            const rentAmount = parseFloat(this.getAttribute('data-rent-amount')) || 0;
+            const leaseStart = this.getAttribute('data-lease-start');
+            const leaseEnd = this.getAttribute('data-lease-end');
+            
+            console.log('Tenant ID:', tenantId, 'Rent:', rentAmount);
+            
+            // Fill modal fields
+            document.getElementById('tenant_id').value = tenantId || '';
+            document.getElementById('property_id').value = propertyId || '';
+            document.getElementById('unit_id').value = unitId || '';
+            document.getElementById('modal-tenant-name').textContent = tenantName || '';
+            document.getElementById('property_title_display').textContent = propertyTitle || '';
+            
+            // Calculate new dates (1 year from current end date or today)
+            let newStartDate = new Date();
+            if (leaseEnd) {
+                newStartDate = new Date(leaseEnd);
+                newStartDate.setDate(newStartDate.getDate() + 1);
+            }
+            
+            let newEndDate = new Date(newStartDate);
+            newEndDate.setFullYear(newEndDate.getFullYear() + 1);
+            
+            document.getElementById('new_start_date').value = newStartDate.toISOString().split('T')[0];
+            document.getElementById('new_end_date').value = newEndDate.toISOString().split('T')[0];
+            
+            // Set payment amount and display
+            document.getElementById('amount').value = rentAmount.toFixed(2);
+            document.getElementById('current_rent_display').textContent = '₦' + rentAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            
+            // Set payment date to today
+            document.getElementById('payment_date').value = new Date().toISOString().split('T')[0];
+            
+            // Reset other fields
+            document.getElementById('payment_method').value = 'Cash';
+            document.getElementById('payment_type').value = 'Full';
+            document.getElementById('description').value = '';
+            
+            // Show modal
+            renewModal.show();
+        });
+    });
+
+    // 🔴 End Lease
+    const endLeaseButtons = document.querySelectorAll('.end-lease-btn');
+    
+    endLeaseButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const tenantId = this.getAttribute('data-tenant-id');
+            const tenantName = this.getAttribute('data-tenant-name');
+            
+            Swal.fire({
+                title: 'End Lease?',
+                html: `Are you sure you want to end the lease for <strong>${tenantName}</strong>?<br>This will unlink the tenant from the property.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, end lease',
+                cancelButtonText: 'Cancel'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    // Show loading
+                    Swal.fire({
+                        title: 'Processing...',
+                        text: 'Ending lease',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+                    
+                    fetch(`/tenants/end_lease/${tenantId}`, { 
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Done!',
+                                text: 'Lease ended successfully.',
+                                confirmButtonText: 'OK'
+                            }).then(() => location.reload());
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: data.message || 'Could not end lease.'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'An error occurred while ending the lease.'
+                        });
+                    });
+                }
+            });
+        });
+    });
+
+    // Form submission with validation
+    const renewForm = document.getElementById('renewForm');
+    if (renewForm) {
+        renewForm.addEventListener('submit', function(e) {
+            const amount = parseFloat(document.getElementById('amount').value);
+            const paymentMethod = document.getElementById('payment_method').value;
+            
+            if (isNaN(amount) || amount <= 0) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Amount',
+                    text: 'Please enter a valid payment amount'
+                });
+                return false;
+            }
+            
+            if (!paymentMethod) {
+                e.preventDefault();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Missing Information',
+                    text: 'Please select a payment method'
+                });
+                return false;
+            }
+        });
+    }
+});
+</script>
+
+</body>
+</html>

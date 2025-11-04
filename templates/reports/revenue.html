@@ -1,0 +1,401 @@
+{% include 'partials/header.html' %}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Revenue Report</h1>
+        <div>
+            <button class="btn btn-primary" onclick="window.print()">
+                <i class="fas fa-print"></i> Print Report
+            </button>
+        </div>
+    </div>
+    
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Filter by Date</h6>
+        </div>
+        <div class="card-body">
+            <form id="dateFilterForm" action="{{ url_for('revenue_report') }}" method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="start_date" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="end_date" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100">Apply Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Revenue</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                ₦{{ "{:,.2f}".format(total_revenue) }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Monthly Revenue Trend</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Revenue by Payment Type</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 200px;">
+                        <canvas id="paymentTypeChart"></canvas>
+                    </div>
+                    <div class="mt-4">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Payment Type</th>
+                                        <th>Amount</th>
+                                        <th>%</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for type in revenue_by_type %}
+                                        <tr>
+                                            <td>{{ type.payment_type }}</td>
+                                            <td>₦{{ "{:,.2f}".format(type.total) }}</td>
+                                            <td>
+                                                {{ (type.total / total_revenue * 100)|round|int if total_revenue > 0 else 0 }}%
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Revenue by Property Type</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="propertyTypeChart"></canvas>
+                    </div>
+                    <div class="mt-4">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Property Type</th>
+                                        <th>Amount</th>
+                                        <th>%</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for type in revenue_by_property_type %}
+                                        <tr>
+                                            <td>{{ type.type }}</td>
+                                            <td>₦{{ "{:,.2f}".format(type.total) }}</td>
+                                            <td>
+                                                {{ (type.total / total_revenue * 100)|round|int if total_revenue > 0 else 0 }}%
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Revenue by Landlord</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Landlord</th>
+                                    <th>Revenue</th>
+                                    <th>Fees (10%)</th>
+                                    <th>Net to Landlord</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for landlord in revenue_by_landlord %}
+                                    <tr>
+                                        <td>{{ landlord.full_name }}</td>
+                                        <td>₦{{ "{:,.2f}".format(landlord.total) }}</td>
+                                        <td>₦{{ "{:,.2f}".format(landlord.fees) }}</td>
+                                        <td>₦{{ "{:,.2f}".format(landlord.total - landlord.fees) }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Outstanding Balances</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Tenant</th>
+                                    <th>Property</th>
+                                    <th>Balance Due</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if outstanding_balances %}
+                                    {% for balance in outstanding_balances %}
+                                        <tr>
+                                            <td>{{ balance.full_name }}</td>
+                                            <td>
+                                                {{ balance.property_title }}
+                                                {% if balance.unit_name %}
+                                                    ({{ balance.unit_name }})
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-danger">₦{{ "{:,.2f}".format(balance.total_due) }}</td>
+                                            <td>
+                                                <a href="{{ url_for('add_payment') }}?tenant_id={{ balance.tenant_id }}" class="btn btn-warning btn-sm">
+                                                    <i class="fas fa-money-bill-wave"></i> Record Payment
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No outstanding balances</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div> <!-- end of main-content div -->
+</div> <!-- end of content div -->
+</div> <!-- end of wrapper div -->
+
+{% include 'partials/modals.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Monthly Revenue Chart
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: [
+                    {% for month in monthly_revenue %}
+                        '{{ month.month }}',
+                    {% endfor %}
+                ],
+                datasets: [{
+                    label: 'Monthly Revenue',
+                    data: [
+                        {% for month in monthly_revenue %}
+                            {{ month.total }},
+                        {% endfor %}
+                    ],
+                    backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                    borderColor: 'rgba(78, 115, 223, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(78, 115, 223, 1)',
+                    pointBorderColor: '#fff',
+                    pointRadius: 4,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Revenue (₦)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Month'
+                        }
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+        
+        // Payment Type Chart
+        const paymentTypeCtx = document.getElementById('paymentTypeChart').getContext('2d');
+        new Chart(paymentTypeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    {% for type in revenue_by_type %}
+                        '{{ type.payment_type }}',
+                    {% endfor %}
+                ],
+                datasets: [{
+                    data: [
+                        {% for type in revenue_by_type %}
+                            {{ type.total }},
+                        {% endfor %}
+                    ],
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(255, 206, 86, 0.6)',
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 206, 86, 1)',
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        
+        // Property Type Chart
+        const propertyTypeCtx = document.getElementById('propertyTypeChart').getContext('2d');
+        new Chart(propertyTypeCtx, {
+            type: 'pie',
+            data: {
+                labels: [
+                    {% for type in revenue_by_property_type %}
+                        '{{ type.type }}',
+                    {% endfor %}
+                ],
+                datasets: [{
+                    data: [
+                        {% for type in revenue_by_property_type %}
+                            {{ type.total }},
+                        {% endfor %}
+                    ],
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(255, 205, 86, 0.6)',
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(153, 102, 255, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(255, 205, 86, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(153, 102, 255, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+        
+        // Form validation
+        const dateFilterForm = document.getElementById('dateFilterForm');
+        dateFilterForm.addEventListener('submit', function(event) {
+            const startDate = new Date(document.getElementById('start_date').value);
+            const endDate = new Date(document.getElementById('end_date').value);
+            
+            if (endDate < startDate) {
+                event.preventDefault();
+                Swal.fire({
+                    title: 'Error',
+                    text: 'End date must be after start date',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        });
+        
+        // Print styles
+        const mediaQueryList = window.matchMedia('print');
+        mediaQueryList.addEventListener('change', function(mql) {
+            if (mql.matches) {
+                // Adjust chart sizes for print
+                Chart.instances.forEach(chart => {
+                    chart.resize();
+                });
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

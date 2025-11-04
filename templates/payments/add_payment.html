@@ -1,0 +1,384 @@
+{% include 'partials/header.html' %}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Add New Payment</h1>
+        <a href="{{ url_for('payments_list') }}" class="btn btn-primary">
+            <i class="fas fa-list"></i> View All Payments
+        </a>
+    </div>
+    
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Payment Details</h6>
+        </div>
+        <div class="card-body">
+            <form method="post" id="paymentForm">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="tenant_id" class="form-label">Tenant <span class="text-danger">*</span></label>
+                            <select class="form-select" id="tenant_id" name="tenant_id" required>
+                                <option value="">-- Select Tenant --</option>
+                                {% for tenant in tenants %}
+                                    <option value="{{ tenant.id }}" 
+                                            data-rent-amount="{{ tenant.rent_amount }}"
+                                            data-outstanding="{{ tenant.outstanding_balance }}">
+                                        {{ tenant.full_name }} - 
+                                        {{ tenant.property_title }}
+                                        {% if tenant.unit_name %}
+                                            ({{ tenant.unit_name }})
+                                        {% endif %}
+                                        {% if tenant.outstanding_balance > 0 %}
+                                            - <span class="text-danger">Balance: ₦{{ "%.2f"|format(tenant.outstanding_balance) }}</span>
+                                        {% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="rent_amount" class="form-label">Expected Rent / Outstanding</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="text" class="form-control" id="rent_amount" disabled>
+                            </div>
+                            <small id="outstanding_info" class="form-text text-danger" style="display: none;"></small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">Payment Amount <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" class="form-control" id="amount" name="amount" min="0.01" step="0.01" required>
+                            </div>
+                            <small id="amount_hint" class="form-text text-muted"></small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="payment_type" class="form-label">Payment Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="payment_type" name="payment_type" required>
+                                <option value="">-- Auto-detected --</option>
+                                <option value="Full">Full Payment</option>
+                                <option value="Partial">Partial Payment</option>
+                            </select>
+                            <small class="form-text text-muted">Type will be auto-detected based on amount</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="payment_method" class="form-label">Payment Method <span class="text-danger">*</span></label>
+                            <select class="form-select" id="payment_method" name="payment_method" required>
+                                <option value="">-- Select Method --</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Check">Check</option>
+                                <option value="Mobile Payment">Mobile Payment</option>
+                                <option value="POS">POS</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="payment_date" class="form-label">Payment Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="payment_date" name="payment_date" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description/Notes</label>
+                    <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                </div>
+                
+                <div id="fee-calculation" class="alert alert-info mb-4" style="display: none;">
+                    <p class="mb-2"><strong>💰 Payment Summary:</strong></p>
+                    <ul class="mb-0">
+                        <li>Payment amount: <span id="summary-amount"></span></li>
+                        <li id="summary-type-row">Payment type: <span id="summary-type"></span></li>
+                        <li id="summary-fee-row" style="display: none;">Management fee (10%): <span id="summary-fee"></span></li>
+                        <li id="summary-landlord-row" style="display: none;">Amount to landlord: <span id="summary-landlord"></span></li>
+                        <li id="summary-balance-row" style="display: none;">Remaining balance: <span id="summary-balance" class="text-danger fw-bold"></span></li>
+                        <li id="summary-renewal-row" style="display: none;"><span class="badge bg-warning text-dark">🔄 Renewal Payment - 10% fee applies</span></li>
+                        <li id="summary-first-row" style="display: none;"><span class="badge bg-success">✨ First Payment - No fee</span></li>
+                    </ul>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-money-bill-wave"></i> Process Payment
+                    </button>
+                    <button type="reset" class="btn btn-secondary">
+                        <i class="fas fa-undo"></i> Reset Form
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</div> <!-- end of main-content div -->
+</div> <!-- end of content div -->
+</div> <!-- end of wrapper div -->
+
+{% include 'partials/modals.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set today as default payment date
+        document.getElementById('payment_date').valueAsDate = new Date();
+        
+        const tenantSelect = document.getElementById('tenant_id');
+        const rentAmountInput = document.getElementById('rent_amount');
+        const amountInput = document.getElementById('amount');
+        const paymentTypeSelect = document.getElementById('payment_type');
+        const feeCalculation = document.getElementById('fee-calculation');
+        const outstandingInfo = document.getElementById('outstanding_info');
+        const amountHint = document.getElementById('amount_hint');
+        
+        let currentRentAmount = 0;
+        let currentOutstanding = 0;
+        let hasFullPaymentBefore = false;
+        
+        function formatCurrency(amount) {
+            return '₦' + parseFloat(amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        }
+        
+        // Check if tenant has made full payment before (for renewal detection)
+        async function checkTenantPaymentHistory(tenantId) {
+            try {
+                const response = await fetch(`/api/tenant-payment-history/${tenantId}`);
+                const data = await response.json();
+                return data.has_full_payment || false;
+            } catch {
+                return false;
+            }
+        }
+        
+        function updateFeeCalculation() {
+            const paymentAmount = parseFloat(amountInput.value);
+            
+            if (isNaN(paymentAmount) || paymentAmount <= 0 || !tenantSelect.value) {
+                feeCalculation.style.display = 'none';
+                return;
+            }
+            
+            // Determine max allowed amount
+            const maxAmount = currentOutstanding > 0 ? currentOutstanding : currentRentAmount;
+            
+            // Validate amount
+            if (paymentAmount > maxAmount) {
+                amountInput.value = maxAmount.toFixed(2);
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Amount Adjusted',
+                    text: `Payment amount cannot exceed ${formatCurrency(maxAmount)}. Amount has been adjusted.`,
+                    timer: 3000
+                });
+                return;
+            }
+            
+            // Auto-detect payment type
+            let detectedType = '';
+            let balanceDue = 0;
+            
+            if (currentOutstanding > 0) {
+                // Paying against outstanding balance
+                if (paymentAmount === currentOutstanding) {
+                    detectedType = 'Full Payment (Completing Balance)';
+                    balanceDue = 0;
+                } else {
+                    detectedType = 'Partial Payment';
+                    balanceDue = currentOutstanding - paymentAmount;
+                }
+            } else {
+                // New payment cycle
+                if (paymentAmount === currentRentAmount) {
+                    detectedType = 'Full Payment';
+                    balanceDue = 0;
+                } else if (paymentAmount < currentRentAmount) {
+                    detectedType = 'Partial Payment';
+                    balanceDue = currentRentAmount - paymentAmount;
+                }
+            }
+            
+            // Show summary
+            document.getElementById('summary-amount').textContent = formatCurrency(paymentAmount);
+            document.getElementById('summary-type').textContent = detectedType;
+            document.getElementById('summary-type-row').style.display = 'list-item';
+            
+            const isFullPayment = balanceDue === 0;
+            const isRenewal = (currentOutstanding === 0 && hasFullPaymentBefore);
+            
+            if (isFullPayment && isRenewal) {
+                // Show 10% deduction
+                const fee = paymentAmount * 0.10;
+                const landlordAmount = paymentAmount - fee;
+                document.getElementById('summary-fee').textContent = formatCurrency(fee);
+                document.getElementById('summary-landlord').textContent = formatCurrency(landlordAmount);
+                document.getElementById('summary-fee-row').style.display = 'list-item';
+                document.getElementById('summary-landlord-row').style.display = 'list-item';
+                document.getElementById('summary-renewal-row').style.display = 'list-item';
+                document.getElementById('summary-first-row').style.display = 'none';
+            } else if (isFullPayment && !isRenewal) {
+                // First payment - no deduction
+                document.getElementById('summary-landlord').textContent = formatCurrency(paymentAmount);
+                document.getElementById('summary-fee-row').style.display = 'none';
+                document.getElementById('summary-landlord-row').style.display = 'list-item';
+                document.getElementById('summary-renewal-row').style.display = 'none';
+                document.getElementById('summary-first-row').style.display = 'list-item';
+            } else {
+                // Partial payment
+                document.getElementById('summary-fee-row').style.display = 'none';
+                document.getElementById('summary-landlord-row').style.display = 'none';
+                document.getElementById('summary-renewal-row').style.display = 'none';
+                document.getElementById('summary-first-row').style.display = 'none';
+            }
+            
+            if (balanceDue > 0) {
+                document.getElementById('summary-balance').textContent = formatCurrency(balanceDue);
+                document.getElementById('summary-balance-row').style.display = 'list-item';
+            } else {
+                document.getElementById('summary-balance-row').style.display = 'none';
+            }
+            
+            feeCalculation.style.display = 'block';
+        }
+        
+        tenantSelect.addEventListener('change', async function() {
+            const selectedOption = this.options[this.selectedIndex];
+            
+            if (selectedOption && selectedOption.value) {
+                currentRentAmount = parseFloat(selectedOption.dataset.rentAmount || 0);
+                currentOutstanding = parseFloat(selectedOption.dataset.outstanding || 0);
+                
+                // Check payment history
+                hasFullPaymentBefore = await checkTenantPaymentHistory(selectedOption.value);
+                
+                if (currentOutstanding > 0) {
+                    rentAmountInput.value = formatCurrency(currentOutstanding).replace('₦', '');
+                    outstandingInfo.style.display = 'block';
+                    outstandingInfo.textContent = `⚠️ Outstanding balance: ${formatCurrency(currentOutstanding)}`;
+                    amountHint.textContent = `Enter amount up to ${formatCurrency(currentOutstanding)}`;
+                    amountInput.value = currentOutstanding.toFixed(2);
+                } else {
+                    rentAmountInput.value = formatCurrency(currentRentAmount).replace('₦', '');
+                    outstandingInfo.style.display = 'none';
+                    amountHint.textContent = `Enter amount up to ${formatCurrency(currentRentAmount)}`;
+                    amountInput.value = currentRentAmount.toFixed(2);
+                }
+                
+                updateFeeCalculation();
+            } else {
+                rentAmountInput.value = '';
+                outstandingInfo.style.display = 'none';
+                amountHint.textContent = '';
+                feeCalculation.style.display = 'none';
+            }
+        });
+        
+        amountInput.addEventListener('input', updateFeeCalculation);
+        
+        // Form submission with AJAX
+        const paymentForm = document.getElementById('paymentForm');
+        paymentForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            if (!tenantSelect.value) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Please select a tenant'
+                });
+                return;
+            }
+            
+            const paymentAmount = parseFloat(amountInput.value);
+            if (isNaN(paymentAmount) || paymentAmount <= 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Please enter a valid payment amount'
+                });
+                return;
+            }
+            
+            if (!document.getElementById('payment_method').value) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Please select a payment method'
+                });
+                return;
+            }
+            
+            // Show loading
+            Swal.fire({
+                title: 'Processing Payment...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            // Submit via AJAX
+            const formData = new FormData(paymentForm);
+            
+            try {
+                const response = await fetch('{{ url_for("add_payment") }}', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        html: data.message,
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        window.location.href = '{{ url_for("payments_list") }}';
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message
+                    });
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while processing the payment'
+                });
+            }
+        });
+        
+        // Handle tenant_id from URL query parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const tenantId = urlParams.get('tenant_id');
+        if (tenantId) {
+            tenantSelect.value = tenantId;
+            tenantSelect.dispatchEvent(new Event('change'));
+        }
+    });
+</script>
+
+</body>
+</html>

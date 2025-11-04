@@ -1,0 +1,240 @@
+{% include 'partials/header.html' %}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Vacant Properties</h1>
+        <div>
+            <a href="{{ url_for('add_property') }}" class="btn btn-success me-2">
+                <i class="fas fa-plus"></i> Add Property
+            </a>
+            <a href="{{ url_for('properties_list') }}" class="btn btn-primary">
+                <i class="fas fa-list"></i> All Properties
+            </a>
+        </div>
+    </div>
+
+    <!-- Standalone Properties -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Vacant Standalone Properties</h6>
+        </div>
+        <div class="card-body">
+            {% if vacant_properties %}
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Type</th>
+                            <th>Location</th>
+                            <th>Price</th>
+                            <th>Landlord</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for property in vacant_properties %}
+                        <tr>
+                            <td><a href="{{ url_for('property_detail', property_id=property.id) }}">{{ property.title }}</a></td>
+                            <td>{{ property.type }}</td>
+                            <td>{{ property.location }}</td>
+                            <td>₦{{ "{:,.2f}".format(property.price) }}</td>
+                            <td>{{ property.landlord_name }}</td>
+                            <td>
+                                <button class="btn btn-success btn-sm rent-btn"
+                                    data-property-id="{{ property.id }}"
+                                    data-property-type="single">
+                                    <i class="fas fa-key"></i> Link Tenant
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">No vacant standalone properties available.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Properties with Vacant Units -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Properties with Vacant Units</h6>
+        </div>
+        <div class="card-body">
+            {% if properties_with_vacant_units %}
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>Location</th>
+                            <th>Landlord</th>
+                            <th>Vacancy</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for property in properties_with_vacant_units %}
+                        <tr>
+                            <td><a href="{{ url_for('property_detail', property_id=property.id) }}">{{ property.title }}</a></td>
+                            <td>{{ property.location }}</td>
+                            <td>{{ property.landlord_name }}</td>
+                            <td>
+                                <span class="badge bg-success">{{ property.vacant_units }}/{{ property.total_units }} Available</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-success btn-sm rent-btn"
+                                    data-property-id="{{ property.id }}"
+                                    data-property-type="multi">
+                                    <i class="fas fa-key"></i> Link Tenant
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">No properties with vacant units available.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Vacant Units -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Individual Vacant Units</h6>
+        </div>
+        <div class="card-body">
+            {% if vacant_units %}
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Unit</th>
+                            <th>Property</th>
+                            <th>Location</th>
+                            <th>Price</th>
+                            <th>Landlord</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for unit in vacant_units %}
+                        <tr>
+                            <td>{{ unit.unit_name }}</td>
+                            <td><a href="{{ url_for('property_detail', property_id=unit.property_id) }}">{{ unit.property_title }}</a></td>
+                            <td>{{ unit.location }}</td>
+                            <td>₦{{ "{:,.2f}".format(unit.price) }}</td>
+                            <td>{{ unit.landlord_name }}</td>
+                            <td>
+                                <button class="btn btn-success btn-sm rent-btn"
+                                    data-property-id="{{ unit.property_id }}"
+                                    data-unit-id="{{ unit.id }}"
+                                    data-property-type="multi">
+                                    <i class="fas fa-key"></i> Link Tenant
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">No individual vacant units available.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Linking Tenant -->
+<div class="modal fade" id="rentPropertyModal" tabindex="-1" aria-labelledby="rentPropertyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('link_tenant_to_property') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Link Tenant to Property</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="rent_property_id" name="property_id">
+                    <div id="unit-selection-container" class="mb-3" style="display: none;">
+                        <label for="unit_id" class="form-label">Select Unit</label>
+                        <select class="form-select" id="unit_id" name="unit_id">
+                            <option value="">-- Select Unit --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="tenant_id" class="form-label">Select Tenant</label>
+                        <select class="form-select" id="tenant_id" name="tenant_id" required>
+                            <option value="">-- Select Tenant --</option>
+                            {% for tenant in unlinked_tenants %}
+                            <option value="{{ tenant.id }}">{{ tenant.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="lease_start_date" class="form-label">Lease Start Date</label>
+                        <input type="date" class="form-control" id="lease_start_date" name="lease_start_date" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="lease_end_date" class="form-label">Lease End Date</label>
+                        <input type="date" class="form-control" id="lease_end_date" name="lease_end_date" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">Link Tenant</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% include 'partials/modals.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rentButtons = document.querySelectorAll('.rent-btn');
+    rentButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const propertyId = this.getAttribute('data-property-id');
+            const propertyType = this.getAttribute('data-property-type');
+            document.getElementById('rent_property_id').value = propertyId;
+            const unitContainer = document.getElementById('unit-selection-container');
+
+            if (propertyType === 'multi') {
+                fetch(`/properties/available-units/${propertyId}`)
+                    .then(response => response.json())
+                    .then(units => {
+                        const unitSelect = document.getElementById('unit_id');
+                        unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
+                        units.forEach(unit => {
+                            const opt = document.createElement('option');
+                            opt.value = unit.id;
+                            opt.textContent = `${unit.unit_name} (₦${unit.price.toLocaleString()})`;
+                            unitSelect.appendChild(opt);
+                        });
+                        unitContainer.style.display = 'block';
+                        new bootstrap.Modal(document.getElementById('rentPropertyModal')).show();
+                    });
+            } else {
+                unitContainer.style.display = 'none';
+                new bootstrap.Modal(document.getElementById('rentPropertyModal')).show();
+            }
+        });
+    });
+});
+</script>
+
+</body>
+</html>

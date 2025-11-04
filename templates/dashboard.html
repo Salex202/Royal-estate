@@ -1,0 +1,419 @@
+{% include 'partials/header.html' %}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Dashboard</h1>
+        <div>
+            <span class="text-muted">Today: {{ now.strftime('%B %d, %Y') }}</span>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Properties</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_properties }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-building fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Total Tenants</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_tenants }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Total Landlords
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_landlords }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-tie fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Rent Due This Month</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">₦{{ "{:,.2f}".format(total_rent_due) }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- General Account card -->
+        <div class="col-xl-6 col-md-6 mb-4">
+            <div class="card border-left-dark shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-dark text-uppercase mb-1">
+                                General Account
+                            </div>
+                            {% if general_balance >= 0 %}
+                                <div class="h5 mb-0 font-weight-bold text-success">
+                                    ₦{{ "{:,.2f}".format(general_balance) }} <small>(Surplus)</small>
+                                </div>
+                            {% else %}
+                                <div class="h5 mb-0 font-weight-bold text-danger">
+                                    ₦{{ "{:,.2f}".format(general_balance) }} <small>(Deficit)</small>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-wallet fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ✅ NEW: Monthly Expected Earnings card -->
+        <div class="col-xl-6 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase">
+                                    Expected Earnings (10%)
+                                </div>
+                                <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#filterEarningsModal">
+                                    <i class="fas fa-filter"></i>
+                                </button>
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                ₦{{ "{:,.2f}".format(expected_earnings) }}
+                            </div>
+                            <div class="text-xs text-muted mt-1">
+                                {{ earnings_month_display }} | {{ expected_renewals }} renewal(s)
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Occupancy Overview</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="occupancyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Occupancy Rate</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="occupancyRateChart"></canvas>
+                    </div>
+                    <div class="mt-4 text-center small">
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-success"></i> Occupied
+                        </span>
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-danger"></i> Vacant
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Upcoming Rent Due</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Tenant</th>
+                                    <th>Property</th>
+                                    <th>Expiry Date</th>
+                                    <th>Days Left</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if upcoming_dues %}
+                                    {% for due in upcoming_dues %}
+                                        <tr>
+                                            <td>{{ due.tenant_name }}</td>
+                                            <td>
+                                                {{ due.property_title }}
+                                                {% if due.unit_name %}
+                                                    ({{ due.unit_name }})
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ due.lease_end_date }}</td>
+                                            <td>
+                                                {% if due.days_remaining <= 7 %}
+                                                    <span class="badge bg-danger">{{ due.days_remaining|round|int }} days</span>
+                                                {% elif due.days_remaining <= 15 %}
+                                                    <span class="badge bg-warning">{{ due.days_remaining|round|int }} days</span>
+                                                {% else %}
+                                                    <span class="badge bg-success">{{ due.days_remaining|round|int }} days</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No upcoming rent due in the next 30 days</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Payments</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Tenant</th>
+                                    <th>Property</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if recent_payments %}
+                                    {% for payment in recent_payments %}
+                                        <tr>
+                                            <td>{{ payment.tenant_name }}</td>
+                                            <td>
+                                                {{ payment.property_title }}
+                                                {% if payment.unit_name %}
+                                                    ({{ payment.unit_name }})
+                                                {% endif %}
+                                            </td>
+                                            <td>₦{{ "{:,.2f}".format(payment.amount) }}</td>
+                                            <td>{{ payment.payment_date }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">No recent payments</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div> <!-- end of main-content div -->
+</div> <!-- end of content div -->
+</div> <!-- end of wrapper div -->
+
+<!-- ✅ NEW: Filter Modal for Expected Earnings -->
+<div class="modal fade" id="filterEarningsModal" tabindex="-1" aria-labelledby="filterEarningsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filterEarningsModalLabel">Filter Expected Earnings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="GET" action="{{ url_for('dashboard') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="filter_month" class="form-label">Month</label>
+                        <select class="form-select" id="filter_month" name="filter_month">
+                            <option value="1" {% if selected_month == 1 %}selected{% endif %}>January</option>
+                            <option value="2" {% if selected_month == 2 %}selected{% endif %}>February</option>
+                            <option value="3" {% if selected_month == 3 %}selected{% endif %}>March</option>
+                            <option value="4" {% if selected_month == 4 %}selected{% endif %}>April</option>
+                            <option value="5" {% if selected_month == 5 %}selected{% endif %}>May</option>
+                            <option value="6" {% if selected_month == 6 %}selected{% endif %}>June</option>
+                            <option value="7" {% if selected_month == 7 %}selected{% endif %}>July</option>
+                            <option value="8" {% if selected_month == 8 %}selected{% endif %}>August</option>
+                            <option value="9" {% if selected_month == 9 %}selected{% endif %}>September</option>
+                            <option value="10" {% if selected_month == 10 %}selected{% endif %}>October</option>
+                            <option value="11" {% if selected_month == 11 %}selected{% endif %}>November</option>
+                            <option value="12" {% if selected_month == 12 %}selected{% endif %}>December</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="filter_year" class="form-label">Year</label>
+                        <select class="form-select" id="filter_year" name="filter_year">
+                            {% for year in range(now.year - 2, now.year + 5) %}
+                                <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Apply Filter</button>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% include 'partials/modals.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Flash messages
+        const flashMessages = document.getElementById('flash-messages');
+        if (flashMessages) {
+            const messages = flashMessages.getElementsByClassName('message');
+            if (messages.length > 0) {
+                Swal.fire({
+                    title: 'Notification',
+                    text: messages[0].textContent,
+                    icon: 'info',
+                    confirmButtonText: 'OK'
+                });
+            }
+        }
+        
+        // Occupancy Chart
+        const occupancyCtx = document.getElementById('occupancyChart').getContext('2d');
+        new Chart(occupancyCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Properties', 'Units'],
+                datasets: [{
+                    label: 'Occupied',
+                    data: [{{ occupied_props }}, {{ occupied_units }}],
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }, {
+                    label: 'Vacant',
+                    data: [{{ vacant_props }}, {{ vacant_units }}],
+                    backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Count'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Category'
+                        }
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+        
+        // Occupancy Rate Chart (Doughnut)
+        const occupancyRateCtx = document.getElementById('occupancyRateChart').getContext('2d');
+        new Chart(occupancyRateCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Occupied', 'Vacant'],
+                datasets: [{
+                    data: [
+                        {{ occupied_props + occupied_units }}, 
+                        {{ vacant_props + vacant_units }}
+                    ],
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(255, 99, 132, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    });
+</script>
+
+</body>
+</html>

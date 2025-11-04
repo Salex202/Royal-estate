@@ -1,0 +1,281 @@
+{% include 'partials/header.html' %}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Add New Tenant</h1>
+        <a href="{{ url_for('tenants_list') }}" class="btn btn-primary">
+            <i class="fas fa-list"></i> View All Tenants
+        </a>
+    </div>
+    
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Tenant Details</h6>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{{ url_for('add_tenant') }}" id="tenantForm">
+                <!-- Personal & Contact -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="full_name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="full_name" name="full_name" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" id="phone" name="phone" required>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="whatsapp" class="form-label">WhatsApp Number</label>
+                            <input type="tel" class="form-control" id="whatsapp" name="whatsapp">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ID & Reach -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_number" class="form-label">ID Number</label>
+                            <input type="text" class="form-control" id="id_number" name="id_number">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="medium_of_reach" class="form-label">Medium of Reach</label>
+                            <input type="text" class="form-control" id="medium_of_reach" name="medium_of_reach">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW FIELDS: Marital Status & Family Info (BEFORE Permanent Address) -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="marital_status" class="form-label">Marital Status</label>
+                            <select class="form-select" id="marital_status" name="marital_status">
+                                <option value="">-- Select --</option>
+                                <option value="Single">Single</option>
+                                <option value="Married">Married</option>
+                                <option value="Divorced">Divorced</option>
+                                <option value="Widowed">Widowed</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="number_of_children" class="form-label">Number of Children</label>
+                            <input type="number" class="form-control" id="number_of_children" name="number_of_children" min="0" max="50">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="spouse_name" class="form-label">Spouse Name</label>
+                            <input type="text" class="form-control" id="spouse_name" name="spouse_name" placeholder="If married">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="spouse_phone" class="form-label">Spouse Phone Number</label>
+                            <input type="tel" class="form-control" id="spouse_phone" name="spouse_phone" placeholder="If applicable">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="permanent_address" class="form-label">Permanent Home Address</label>
+                    <textarea class="form-control" id="permanent_address" name="permanent_address" rows="2"></textarea>
+                </div>
+
+                <!-- Occupation -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="occupation" class="form-label">Occupation</label>
+                            <input type="text" class="form-control" id="occupation" name="occupation">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="employer" class="form-label">Employer</label>
+                            <input type="text" class="form-control" id="employer" name="employer">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lease Dates (Optional Now) -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="lease_start_date" class="form-label">Start Date of Lease</label>
+                            <input type="date" class="form-control" id="lease_start_date" name="lease_start_date">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="lease_end_date" class="form-label">Expiry Date of Lease</label>
+                            <input type="date" class="form-control" id="lease_end_date" name="lease_end_date">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="receipt_info" class="form-label">Receipt Info</label>
+                    <input type="text" class="form-control" id="receipt_info" name="receipt_info" placeholder="Receipt Number/Information">
+                </div>
+
+                <!-- Bank Info -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="bank_name" class="form-label">Bank Name</label>
+                            <input type="text" class="form-control" id="bank_name" name="bank_name">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="account_number" class="form-label">Account Number</label>
+                            <input type="text" class="form-control" id="account_number" name="account_number">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Demographics -->
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="age" class="form-label">Age</label>
+                            <input type="number" class="form-control" id="age" name="age" min="18" max="120">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="sex" class="form-label">Sex</label>
+                            <select class="form-select" id="sex" name="sex">
+                                <option value="">-- Select --</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="state_of_origin" class="form-label">State of Origin</label>
+                            <input type="text" class="form-control" id="state_of_origin" name="state_of_origin">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label for="nationality" class="form-label">Nationality</label>
+                            <input type="text" class="form-control" id="nationality" name="nationality">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="tribe" class="form-label">Tribe</label>
+                    <input type="text" class="form-control" id="tribe" name="tribe">
+                </div>
+
+                <div class="mb-3">
+                    <label for="remarks" class="form-label">Remarks</label>
+                    <textarea class="form-control" id="remarks" name="remarks" rows="2"></textarea>
+                </div>
+
+                <hr class="my-4">
+
+                <h5 class="mb-3">Guarantor Information</h5>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="guarantor_name" class="form-label">Guarantor Name</label>
+                            <input type="text" class="form-control" id="guarantor_name" name="guarantor_name">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="guarantor_phone" class="form-label">Guarantor Phone</label>
+                            <input type="tel" class="form-control" id="guarantor_phone" name="guarantor_phone">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="guarantor_address" class="form-label">Guarantor Address</label>
+                            <textarea class="form-control" id="guarantor_address" name="guarantor_address" rows="1"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <h5 class="mb-3">Next of Kin Information</h5>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="next_of_kin_name" class="form-label">Next of Kin Name</label>
+                            <input type="text" class="form-control" id="next_of_kin_name" name="next_of_kin_name">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="next_of_kin_address" class="form-label">Next of Kin Address</label>
+                            <textarea class="form-control" id="next_of_kin_address" name="next_of_kin_address" rows="1"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Save Tenant
+                    </button>
+                    <button type="reset" class="btn btn-secondary">
+                        <i class="fas fa-undo"></i> Reset Form
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% include 'partials/modals.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Flash messages
+    const flashMessages = document.getElementById('flash-messages');
+    if (flashMessages) {
+        const messages = flashMessages.getElementsByClassName('message');
+        if (messages.length > 0) {
+            Swal.fire({
+                title: 'Notification',
+                text: messages[0].textContent,
+                icon: 'info',
+                confirmButtonText: 'OK'
+            });
+        }
+    }
+});
+</script>
+
+</body>
+</html>

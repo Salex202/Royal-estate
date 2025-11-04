@@ -1,0 +1,210 @@
+{% include 'partials/header.html' %}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">{{ property.title }} - Details</h1>
+        <div>
+            <a href="{{ url_for('properties_list') }}" class="btn btn-primary">
+                <i class="fas fa-list"></i> Back to Properties
+            </a>
+        </div>
+    </div>
+
+    <!-- Property Information -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Property Information</h6>
+            {% if property.status == 'Vacant' %}
+                <button class="btn btn-success btn-sm rent-btn" data-property-id="{{ property.id }}" data-property-type="single">
+                    <i class="fas fa-key"></i> Link Tenant
+                </button>
+            {% else %}
+                <button class="btn btn-secondary btn-sm" disabled>
+                    <i class="fas fa-key"></i> Occupied
+                </button>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p><strong>Type:</strong> {{ property.type }}</p>
+                    <p><strong>Location:</strong> {{ property.location }}</p>
+                    <p><strong>Price:</strong> ₦{{ "{:,.2f}".format(property.price) if property.price else 'N/A' }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Landlord:</strong> {{ property.landlord_name }}</p>
+                    <p><strong>Status:</strong>
+                        {% if property.status == 'Occupied' %}
+                            <span class="badge bg-danger">Occupied</span>
+                        {% else %}
+                            <span class="badge bg-success">Vacant</span>
+                        {% endif %}
+                    </p>
+                    <p><strong>Date Added:</strong> {{ property.created_at }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- For Multi-Unit Properties -->
+    {% if property.type in ['Tenement', 'Shop'] %}
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Units Information</h6>
+        </div>
+        <div class="card-body">
+            {% if units %}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Unit Name</th>
+                                <th>Price</th>
+                                <th>Status</th>
+                                <th>Tenant</th>
+                                <th>Lease Period</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for unit in units %}
+                                <tr>
+                                    <td>{{ unit.unit_name }}</td>
+                                    <td>₦{{ "{:,.2f}".format(unit.price) }}</td>
+                                    <td>
+                                        {% if unit.status == 'Occupied' %}
+                                            <span class="badge bg-danger">Occupied</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Vacant</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if unit.tenant_name %}
+                                            <a href="{{ url_for('tenant_detail', tenant_id=unit.tenant_id) }}">
+                                                {{ unit.tenant_name }}
+                                            </a>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if unit.start_date %}
+                                            {{ unit.start_date }} - {{ unit.expiry_date }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if unit.status == 'Vacant' %}
+                                            <button class="btn btn-success btn-sm rent-btn"
+                                                    data-property-id="{{ property.id }}"
+                                                    data-property-type="multi">
+                                                <i class="fas fa-key"></i> Link Tenant
+                                            </button>
+                                        {% else %}
+                                            <button class="btn btn-secondary btn-sm" disabled>
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">No units added for this property yet.</div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tenants Linked (for standalone properties) -->
+    {% if tenants %}
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Linked Tenant</h6>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Tenant Name</th>
+                        <th>Lease Start</th>
+                        <th>Lease End</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tenant in tenants %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('tenant_detail', tenant_id=tenant.id) }}">
+                                    {{ tenant.full_name }}
+                                </a>
+                            </td>
+                            <td>{{ tenant.start_date or 'N/A' }}</td>
+                            <td>{{ tenant.expiry_date or 'N/A' }}</td>
+                            <td>
+                                {% if tenant.is_active %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+</div> <!-- end main-content -->
+</div> <!-- end content -->
+</div> <!-- end wrapper -->
+
+{% include 'partials/modals.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/properties.js') }}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rentButtons = document.querySelectorAll('.rent-btn');
+    rentButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const propertyId = this.getAttribute('data-property-id');
+            const propertyType = this.getAttribute('data-property-type');
+            document.getElementById('rent_property_id').value = propertyId;
+
+            const unitContainer = document.getElementById('unit-selection-container');
+            if (propertyType === 'multi') {
+                fetch(`/properties/available-units/${propertyId}`)
+                    .then(response => response.json())
+                    .then(units => {
+                        const unitSelect = document.getElementById('unit_id');
+                        unitSelect.innerHTML = '<option value="">-- Select Unit --</option>';
+                        units.forEach(unit => {
+                            const opt = document.createElement('option');
+                            opt.value = unit.id;
+                            opt.textContent = `${unit.unit_name} (₦${unit.price.toLocaleString()})`;
+                            unitSelect.appendChild(opt);
+                        });
+                        unitContainer.style.display = 'block';
+                        new bootstrap.Modal(document.getElementById('rentPropertyModal')).show();
+                    });
+            } else {
+                unitContainer.style.display = 'none';
+                new bootstrap.Modal(document.getElementById('rentPropertyModal')).show();
+            }
+        });
+    });
+});
+</script>
+
+</body>
+</html>

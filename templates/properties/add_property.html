@@ -1,0 +1,235 @@
+{% include 'partials/header.html' %}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3">Add New Property</h1>
+        <a href="{{ url_for('properties_list') }}" class="btn btn-primary">
+            <i class="fas fa-list"></i> View All Properties
+        </a>
+    </div>
+    
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Property Details</h6>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{{ url_for('add_property') }}" enctype="multipart/form-data" id="propertyForm">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Property Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="type" class="form-label">Property Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="type" name="type" required>
+                                <option value="">-- Select Type --</option>
+                                <option value="Apartment">Apartment</option>
+                                <option value="House">House</option>
+                                <option value="Office">Office</option>
+                                <option value="Shop">Shop</option>
+                                <option value="Tenement">Tenement</option>
+                                <option value="Warehouse">Warehouse</option>
+                                <option value="Land">Land</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="location" class="form-label">Location <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="location" name="location" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="size" class="form-label">Size</label>
+                            <input type="text" class="form-control" id="size" name="size" placeholder="e.g. 1200 sqft">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="landlord_id" class="form-label">Landlord <span class="text-danger">*</span></label>
+                            <select class="form-select" id="landlord_id" name="landlord_id" required>
+                                <option value="">-- Select Landlord --</option>
+                                {% for landlord in landlords %}
+                                    <option value="{{ landlord.id }}">{{ landlord.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6" id="price-container">
+                        <div class="mb-3">
+                            <label for="price" class="form-label">Price</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" class="form-control" id="price" name="price" min="0" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row" id="units-container" style="display: none;">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="num_units" class="form-label">Number of Units <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="num_units" name="num_units" min="1" value="1">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-outline-primary" id="generate-units-btn">
+                                Generate Unit Fields
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="units-fields-container"></div>
+                
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="4"></textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="property_image" class="form-label">Property Image</label>
+                    <input type="file" class="form-control" id="property_image" name="property_image">
+                </div>
+                
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save"></i> Save Property
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+</div> <!-- end of main-content div -->
+</div> <!-- end of content div -->
+</div> <!-- end of wrapper div -->
+
+{% include 'partials/modals.html' %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/properties.js') }}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle property type change
+        const typeSelect = document.getElementById('type');
+        const priceContainer = document.getElementById('price-container');
+        const unitsContainer = document.getElementById('units-container');
+        
+        typeSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+            
+            if (selectedType === 'Tenement' || selectedType === 'Shop') {
+                priceContainer.style.display = 'none';
+                unitsContainer.style.display = 'flex';
+            } else {
+                priceContainer.style.display = 'block';
+                unitsContainer.style.display = 'none';
+                // Clear units fields
+                document.getElementById('units-fields-container').innerHTML = '';
+            }
+        });
+        
+        // Generate unit fields
+        const generateUnitsBtn = document.getElementById('generate-units-btn');
+        generateUnitsBtn.addEventListener('click', function() {
+            const numUnits = parseInt(document.getElementById('num_units').value) || 0;
+            const container = document.getElementById('units-fields-container');
+            
+            // Clear previous fields
+            container.innerHTML = '';
+            
+            if (numUnits < 1) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Please enter a valid number of units (at least 1)',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+            
+            // Create unit fields
+            for (let i = 1; i <= numUnits; i++) {
+                const unitRow = document.createElement('div');
+                unitRow.className = 'row border-top pt-3 mt-3';
+                unitRow.innerHTML = `
+                    <h5 class="mb-3">Unit #${i}</h5>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="unit_name_${i}" class="form-label">Unit Name/Number <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="unit_name_${i}" name="unit_name_${i}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="unit_size_${i}" class="form-label">Size</label>
+                            <input type="text" class="form-control" id="unit_size_${i}" name="unit_size_${i}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="unit_price_${i}" class="form-label">Rent Price <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" class="form-control" id="unit_price_${i}" name="unit_price_${i}" min="0" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(unitRow);
+            }
+        });
+        
+        // Form validation
+        const propertyForm = document.getElementById('propertyForm');
+        propertyForm.addEventListener('submit', function(event) {
+            const selectedType = typeSelect.value;
+            
+            if (selectedType === 'Tenement' || selectedType === 'Shop') {
+                const numUnits = parseInt(document.getElementById('num_units').value) || 0;
+                if (numUnits < 1) {
+                    event.preventDefault();
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Please generate at least one unit',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            }
+        });
+        
+        // Flash messages
+        const flashMessages = document.getElementById('flash-messages');
+        if (flashMessages) {
+            const messages = flashMessages.getElementsByClassName('message');
+            if (messages.length > 0) {
+                Swal.fire({
+                    title: 'Notification',
+                    text: messages[0].textContent,
+                    icon: 'info',
+                    confirmButtonText: 'OK'
+                });
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
